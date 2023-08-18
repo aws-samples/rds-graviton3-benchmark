@@ -1,0 +1,984 @@
+{
+ "Parameters": {
+  "rdsInstanceType": {
+   "Type": "String",
+   "Default": "m7g",
+   "AllowedValues": [
+    "m7g",
+    "m6i",
+    "m6g"
+   ],
+   "Description": "Select the RDS instance type you want to test. Can be m6g, m6i or m7g. The size will be xlarge"
+  },
+  "DBEngine": {
+   "Type": "String",
+   "Default": "postgres",
+   "AllowedValues": [
+    "postgres",
+    "mariadb",
+    "mysql"
+   ],
+   "Description": "Select the RDS engine you want to test. Can be MySQL, MariaDB or PostgreSQL with the following versions: MySQL 8.0.32, PostgreSQL 15.2 and MariaDB 10.6.10"
+  },
+  "RDSPassword": {
+   "Type": "String",
+   "Default": "Password1234",
+   "AllowedPattern": "^[a-zA-Z0-9]*$",
+   "Description": "Enter an admin password for your RDS instance. The password can contain numbers and letters (uppercase and lowercase) "
+  },
+  "SsmParameterValueawsserviceamiamazonlinuxlatestal2023amikernel61arm64C96584B6F00A464EAD1953AFF4B05118Parameter": {
+   "Type": "AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>",
+   "Default": "/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-6.1-arm64"
+  }
+ },
+ "Mappings": {
+  "userMap": {
+   "postgres": {
+    "username": "postgres"
+   },
+   "mariadb": {
+    "username": "admin"
+   },
+   "mysql": {
+    "username": "admin"
+   }
+  },
+  "versionMap": {
+   "postgres": {
+    "version": "15.2"
+   },
+   "mariadb": {
+    "version": "10.6.10"
+   },
+   "mysql": {
+    "version": "8.0.32"
+   }
+  },
+  "familymap": {
+   "postgres": {
+    "family": "postgres15"
+   },
+   "mariadb": {
+    "family": "mariadb10.6"
+   },
+   "mysql": {
+    "family": "mysql8.0"
+   }
+  }
+ },
+ "Resources": {
+  "g3vpc": {
+   "Type": "AWS::EC2::VPC",
+   "Properties": {
+    "CidrBlock": "10.0.0.0/24",
+    "EnableDnsHostnames": true,
+    "EnableDnsSupport": true
+   },
+   "Metadata": {
+    "aws:cdk:path": "Graviton3BenchmarkResourcesStack/g3vpc"
+   }
+  },
+  "g3ec2subnetSubnet98A39B3B": {
+   "Type": "AWS::EC2::Subnet",
+   "Properties": {
+    "VpcId": {
+     "Fn::GetAtt": [
+      "g3vpc",
+      "VpcId"
+     ]
+    },
+    "AvailabilityZone": {
+     "Fn::Select": [
+      1,
+      {
+       "Fn::GetAZs": ""
+      }
+     ]
+    },
+    "CidrBlock": "10.0.0.24/28",
+    "Tags": [
+     {
+      "Key": "Name",
+      "Value": "Graviton3BenchmarkResourcesStack/g3ec2subnet"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "Graviton3BenchmarkResourcesStack/g3ec2subnet/Subnet"
+   }
+  },
+  "g3ec2subnetRouteTable622F3144": {
+   "Type": "AWS::EC2::RouteTable",
+   "Properties": {
+    "VpcId": {
+     "Fn::GetAtt": [
+      "g3vpc",
+      "VpcId"
+     ]
+    },
+    "Tags": [
+     {
+      "Key": "Name",
+      "Value": "Graviton3BenchmarkResourcesStack/g3ec2subnet"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "Graviton3BenchmarkResourcesStack/g3ec2subnet/RouteTable"
+   }
+  },
+  "g3ec2subnetRouteTableAssociationDCFB88FA": {
+   "Type": "AWS::EC2::SubnetRouteTableAssociation",
+   "Properties": {
+    "RouteTableId": {
+     "Ref": "g3ec2subnetRouteTable622F3144"
+    },
+    "SubnetId": {
+     "Ref": "g3ec2subnetSubnet98A39B3B"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "Graviton3BenchmarkResourcesStack/g3ec2subnet/RouteTableAssociation"
+   }
+  },
+  "g3ec2subnetDefaultRouteEB8AC0A7": {
+   "Type": "AWS::EC2::Route",
+   "Properties": {
+    "RouteTableId": {
+     "Ref": "g3ec2subnetRouteTable622F3144"
+    },
+    "DestinationCidrBlock": "0.0.0.0/0",
+    "NatGatewayId": {
+     "Fn::GetAtt": [
+      "g3publicSubnetNATGatewayEB029118",
+      "NatGatewayId"
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "Graviton3BenchmarkResourcesStack/g3ec2subnet/DefaultRoute"
+   }
+  },
+  "g3publicSubnet0F71FCC1": {
+   "Type": "AWS::EC2::Subnet",
+   "Properties": {
+    "VpcId": {
+     "Fn::GetAtt": [
+      "g3vpc",
+      "VpcId"
+     ]
+    },
+    "AvailabilityZone": {
+     "Fn::Select": [
+      1,
+      {
+       "Fn::GetAZs": ""
+      }
+     ]
+    },
+    "CidrBlock": "10.0.0.64/28",
+    "Tags": [
+     {
+      "Key": "Name",
+      "Value": "Graviton3BenchmarkResourcesStack/g3publicSubnet"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "Graviton3BenchmarkResourcesStack/g3publicSubnet/Subnet"
+   }
+  },
+  "g3publicSubnetRouteTableD51C371D": {
+   "Type": "AWS::EC2::RouteTable",
+   "Properties": {
+    "VpcId": {
+     "Fn::GetAtt": [
+      "g3vpc",
+      "VpcId"
+     ]
+    },
+    "Tags": [
+     {
+      "Key": "Name",
+      "Value": "Graviton3BenchmarkResourcesStack/g3publicSubnet"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "Graviton3BenchmarkResourcesStack/g3publicSubnet/RouteTable"
+   }
+  },
+  "g3publicSubnetRouteTableAssociation444A83CF": {
+   "Type": "AWS::EC2::SubnetRouteTableAssociation",
+   "Properties": {
+    "RouteTableId": {
+     "Ref": "g3publicSubnetRouteTableD51C371D"
+    },
+    "SubnetId": {
+     "Ref": "g3publicSubnet0F71FCC1"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "Graviton3BenchmarkResourcesStack/g3publicSubnet/RouteTableAssociation"
+   }
+  },
+  "g3publicSubnetEIP5855FAC5": {
+   "Type": "AWS::EC2::EIP",
+   "Properties": {
+    "Domain": "vpc",
+    "Tags": [
+     {
+      "Key": "Name",
+      "Value": "Graviton3BenchmarkResourcesStack/g3publicSubnet"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "Graviton3BenchmarkResourcesStack/g3publicSubnet/EIP"
+   }
+  },
+  "g3publicSubnetNATGatewayEB029118": {
+   "Type": "AWS::EC2::NatGateway",
+   "Properties": {
+    "SubnetId": {
+     "Ref": "g3publicSubnet0F71FCC1"
+    },
+    "AllocationId": {
+     "Fn::GetAtt": [
+      "g3publicSubnetEIP5855FAC5",
+      "AllocationId"
+     ]
+    },
+    "Tags": [
+     {
+      "Key": "Name",
+      "Value": "Graviton3BenchmarkResourcesStack/g3publicSubnet"
+     }
+    ]
+   },
+   "DependsOn": [
+    "g3publicSubnetDefaultRoute8DCC3550",
+    "g3publicSubnetRouteTableAssociation444A83CF"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "Graviton3BenchmarkResourcesStack/g3publicSubnet/NATGateway"
+   }
+  },
+  "g3publicSubnetDefaultRoute8DCC3550": {
+   "Type": "AWS::EC2::Route",
+   "Properties": {
+    "RouteTableId": {
+     "Ref": "g3publicSubnetRouteTableD51C371D"
+    },
+    "DestinationCidrBlock": "0.0.0.0/0",
+    "GatewayId": {
+     "Fn::GetAtt": [
+      "InternetGateway",
+      "InternetGatewayId"
+     ]
+    }
+   },
+   "DependsOn": [
+    "internetgwattachment"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "Graviton3BenchmarkResourcesStack/g3publicSubnet/DefaultRoute"
+   }
+  },
+  "g3rdssubnetNotUsedSubnet77A407E5": {
+   "Type": "AWS::EC2::Subnet",
+   "Properties": {
+    "VpcId": {
+     "Fn::GetAtt": [
+      "g3vpc",
+      "VpcId"
+     ]
+    },
+    "AvailabilityZone": {
+     "Fn::Select": [
+      2,
+      {
+       "Fn::GetAZs": ""
+      }
+     ]
+    },
+    "CidrBlock": "10.0.0.200/28",
+    "Tags": [
+     {
+      "Key": "Name",
+      "Value": "Graviton3BenchmarkResourcesStack/g3rdssubnetNotUsed"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "Graviton3BenchmarkResourcesStack/g3rdssubnetNotUsed/Subnet"
+   }
+  },
+  "g3rdssubnetNotUsedRouteTable73F13EBB": {
+   "Type": "AWS::EC2::RouteTable",
+   "Properties": {
+    "VpcId": {
+     "Fn::GetAtt": [
+      "g3vpc",
+      "VpcId"
+     ]
+    },
+    "Tags": [
+     {
+      "Key": "Name",
+      "Value": "Graviton3BenchmarkResourcesStack/g3rdssubnetNotUsed"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "Graviton3BenchmarkResourcesStack/g3rdssubnetNotUsed/RouteTable"
+   }
+  },
+  "g3rdssubnetNotUsedRouteTableAssociation4AB2208D": {
+   "Type": "AWS::EC2::SubnetRouteTableAssociation",
+   "Properties": {
+    "RouteTableId": {
+     "Ref": "g3rdssubnetNotUsedRouteTable73F13EBB"
+    },
+    "SubnetId": {
+     "Ref": "g3rdssubnetNotUsedSubnet77A407E5"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "Graviton3BenchmarkResourcesStack/g3rdssubnetNotUsed/RouteTableAssociation"
+   }
+  },
+  "InternetGateway": {
+   "Type": "AWS::EC2::InternetGateway",
+   "Metadata": {
+    "aws:cdk:path": "Graviton3BenchmarkResourcesStack/InternetGateway"
+   }
+  },
+  "cdkG3vpcssmMessagesEndpointSecurityGroup19ED5F55": {
+   "Type": "AWS::EC2::SecurityGroup",
+   "Properties": {
+    "GroupDescription": "Graviton3BenchmarkResourcesStack/cdkG3vpc/ssmMessagesEndpoint/SecurityGroup",
+    "SecurityGroupEgress": [
+     {
+      "CidrIp": "0.0.0.0/0",
+      "Description": "Allow all outbound traffic by default",
+      "IpProtocol": "-1"
+     }
+    ],
+    "SecurityGroupIngress": [
+     {
+      "CidrIp": "10.0.0.0/24",
+      "Description": "from 10.0.0.0/24:443",
+      "FromPort": 443,
+      "IpProtocol": "tcp",
+      "ToPort": 443
+     }
+    ],
+    "VpcId": {
+     "Fn::GetAtt": [
+      "g3vpc",
+      "VpcId"
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "Graviton3BenchmarkResourcesStack/cdkG3vpc/ssmMessagesEndpoint/SecurityGroup/Resource"
+   }
+  },
+  "cdkG3vpcssmMessagesEndpointC0F003CA": {
+   "Type": "AWS::EC2::VPCEndpoint",
+   "Properties": {
+    "ServiceName": {
+     "Fn::Join": [
+      "",
+      [
+       "com.amazonaws.",
+       {
+        "Ref": "AWS::Region"
+       },
+       ".ssmmessages"
+      ]
+     ]
+    },
+    "VpcId": {
+     "Fn::GetAtt": [
+      "g3vpc",
+      "VpcId"
+     ]
+    },
+    "PrivateDnsEnabled": true,
+    "SecurityGroupIds": [
+     {
+      "Fn::GetAtt": [
+       "cdkG3vpcssmMessagesEndpointSecurityGroup19ED5F55",
+       "GroupId"
+      ]
+     }
+    ],
+    "SubnetIds": [
+     {
+      "Ref": "g3ec2subnetSubnet98A39B3B"
+     }
+    ],
+    "VpcEndpointType": "Interface"
+   },
+   "Metadata": {
+    "aws:cdk:path": "Graviton3BenchmarkResourcesStack/cdkG3vpc/ssmMessagesEndpoint/Resource"
+   }
+  },
+  "cdkG3vpcec2MessagesEndpointSecurityGroup15E1DA46": {
+   "Type": "AWS::EC2::SecurityGroup",
+   "Properties": {
+    "GroupDescription": "Graviton3BenchmarkResourcesStack/cdkG3vpc/ec2MessagesEndpoint/SecurityGroup",
+    "SecurityGroupEgress": [
+     {
+      "CidrIp": "0.0.0.0/0",
+      "Description": "Allow all outbound traffic by default",
+      "IpProtocol": "-1"
+     }
+    ],
+    "SecurityGroupIngress": [
+     {
+      "CidrIp": "10.0.0.0/24",
+      "Description": "from 10.0.0.0/24:443",
+      "FromPort": 443,
+      "IpProtocol": "tcp",
+      "ToPort": 443
+     }
+    ],
+    "VpcId": {
+     "Fn::GetAtt": [
+      "g3vpc",
+      "VpcId"
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "Graviton3BenchmarkResourcesStack/cdkG3vpc/ec2MessagesEndpoint/SecurityGroup/Resource"
+   }
+  },
+  "cdkG3vpcec2MessagesEndpointF9E2309E": {
+   "Type": "AWS::EC2::VPCEndpoint",
+   "Properties": {
+    "ServiceName": {
+     "Fn::Join": [
+      "",
+      [
+       "com.amazonaws.",
+       {
+        "Ref": "AWS::Region"
+       },
+       ".ec2messages"
+      ]
+     ]
+    },
+    "VpcId": {
+     "Fn::GetAtt": [
+      "g3vpc",
+      "VpcId"
+     ]
+    },
+    "PrivateDnsEnabled": true,
+    "SecurityGroupIds": [
+     {
+      "Fn::GetAtt": [
+       "cdkG3vpcec2MessagesEndpointSecurityGroup15E1DA46",
+       "GroupId"
+      ]
+     }
+    ],
+    "SubnetIds": [
+     {
+      "Ref": "g3ec2subnetSubnet98A39B3B"
+     }
+    ],
+    "VpcEndpointType": "Interface"
+   },
+   "Metadata": {
+    "aws:cdk:path": "Graviton3BenchmarkResourcesStack/cdkG3vpc/ec2MessagesEndpoint/Resource"
+   }
+  },
+  "cdkG3vpcssmEndpointSecurityGroup87051EC7": {
+   "Type": "AWS::EC2::SecurityGroup",
+   "Properties": {
+    "GroupDescription": "Graviton3BenchmarkResourcesStack/cdkG3vpc/ssmEndpoint/SecurityGroup",
+    "SecurityGroupEgress": [
+     {
+      "CidrIp": "0.0.0.0/0",
+      "Description": "Allow all outbound traffic by default",
+      "IpProtocol": "-1"
+     }
+    ],
+    "SecurityGroupIngress": [
+     {
+      "CidrIp": "10.0.0.0/24",
+      "Description": "from 10.0.0.0/24:443",
+      "FromPort": 443,
+      "IpProtocol": "tcp",
+      "ToPort": 443
+     }
+    ],
+    "VpcId": {
+     "Fn::GetAtt": [
+      "g3vpc",
+      "VpcId"
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "Graviton3BenchmarkResourcesStack/cdkG3vpc/ssmEndpoint/SecurityGroup/Resource"
+   }
+  },
+  "cdkG3vpcssmEndpointCCCFA894": {
+   "Type": "AWS::EC2::VPCEndpoint",
+   "Properties": {
+    "ServiceName": {
+     "Fn::Join": [
+      "",
+      [
+       "com.amazonaws.",
+       {
+        "Ref": "AWS::Region"
+       },
+       ".ssm"
+      ]
+     ]
+    },
+    "VpcId": {
+     "Fn::GetAtt": [
+      "g3vpc",
+      "VpcId"
+     ]
+    },
+    "PrivateDnsEnabled": true,
+    "SecurityGroupIds": [
+     {
+      "Fn::GetAtt": [
+       "cdkG3vpcssmEndpointSecurityGroup87051EC7",
+       "GroupId"
+      ]
+     }
+    ],
+    "SubnetIds": [
+     {
+      "Ref": "g3ec2subnetSubnet98A39B3B"
+     }
+    ],
+    "VpcEndpointType": "Interface"
+   },
+   "Metadata": {
+    "aws:cdk:path": "Graviton3BenchmarkResourcesStack/cdkG3vpc/ssmEndpoint/Resource"
+   }
+  },
+  "internetgwattachment": {
+   "Type": "AWS::EC2::VPCGatewayAttachment",
+   "Properties": {
+    "VpcId": {
+     "Fn::GetAtt": [
+      "g3vpc",
+      "VpcId"
+     ]
+    },
+    "InternetGatewayId": {
+     "Fn::GetAtt": [
+      "InternetGateway",
+      "InternetGatewayId"
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "Graviton3BenchmarkResourcesStack/internet_gw_attachment"
+   }
+  },
+  "ec2SecGroupEEF80AA3": {
+   "Type": "AWS::EC2::SecurityGroup",
+   "Properties": {
+    "GroupDescription": "Security group allowing connectivity witin the VPC",
+    "SecurityGroupEgress": [
+     {
+      "CidrIp": "0.0.0.0/0",
+      "Description": "Allow all outbound traffic by default",
+      "IpProtocol": "-1"
+     }
+    ],
+    "VpcId": {
+     "Fn::GetAtt": [
+      "g3vpc",
+      "VpcId"
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "Graviton3BenchmarkResourcesStack/ec2SecGroup/Resource"
+   }
+  },
+  "testBenchInstanceInstanceRole8461F335": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "ec2.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/AmazonSSMManagedInstanceCore"
+       ]
+      ]
+     }
+    ],
+    "Tags": [
+     {
+      "Key": "Name",
+      "Value": "Graviton3BenchmarkResourcesStack/testBenchInstance"
+     }
+    ]
+   },
+   "DependsOn": [
+    "DBInstance"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "Graviton3BenchmarkResourcesStack/testBenchInstance/InstanceRole/Resource"
+   }
+  },
+  "testBenchInstanceInstanceProfileFB6ABC1F": {
+   "Type": "AWS::IAM::InstanceProfile",
+   "Properties": {
+    "Roles": [
+     {
+      "Ref": "testBenchInstanceInstanceRole8461F335"
+     }
+    ]
+   },
+   "DependsOn": [
+    "DBInstance"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "Graviton3BenchmarkResourcesStack/testBenchInstance/InstanceProfile"
+   }
+  },
+  "testBenchInstance0D9EDE5B": {
+   "Type": "AWS::EC2::Instance",
+   "Properties": {
+    "AvailabilityZone": {
+     "Fn::Select": [
+      1,
+      {
+       "Fn::GetAZs": ""
+      }
+     ]
+    },
+    "IamInstanceProfile": {
+     "Ref": "testBenchInstanceInstanceProfileFB6ABC1F"
+    },
+    "ImageId": {
+     "Ref": "SsmParameterValueawsserviceamiamazonlinuxlatestal2023amikernel61arm64C96584B6F00A464EAD1953AFF4B05118Parameter"
+    },
+    "InstanceType": "m6g.4xlarge",
+    "SecurityGroupIds": [
+     {
+      "Fn::GetAtt": [
+       "ec2SecGroupEEF80AA3",
+       "GroupId"
+      ]
+     }
+    ],
+    "SubnetId": {
+     "Ref": "g3ec2subnetSubnet98A39B3B"
+    },
+    "Tags": [
+     {
+      "Key": "Name",
+      "Value": "Graviton3BenchmarkResourcesStack/testBenchInstance"
+     }
+    ],
+    "UserData": {
+     "Fn::Base64": "#!/bin/bash\n\n        sudo yum -y install git\n        sudo yum -y install make automake libtool pkgconfig libaio-devel\n        sudo yum -y install mariadb105-devel postgresql-devel openssl-devel\n        cd /usr/\n        git clone https://github.com/akopytov/sysbench.git --branch 1.0.20\n        cd sysbench\n        ./autogen.sh\n    \t./configure --with-pgsql\n    \tmake -j\n    \tmake install\n    \t"
+    }
+   },
+   "DependsOn": [
+    "DBInstance",
+    "testBenchInstanceInstanceRole8461F335"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "Graviton3BenchmarkResourcesStack/testBenchInstance/Resource"
+   }
+  },
+  "SubnetGroup": {
+   "Type": "AWS::RDS::DBSubnetGroup",
+   "Properties": {
+    "DBSubnetGroupDescription": "Subnet group containing a single subnet to perform RDS performance tests",
+    "SubnetIds": [
+     {
+      "Ref": "g3rdssubnetNotUsedSubnet77A407E5"
+     },
+     {
+      "Ref": "g3ec2subnetSubnet98A39B3B"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "Graviton3BenchmarkResourcesStack/SubnetGroup/Default"
+   }
+  },
+  "rdsSecGroupB356CE28": {
+   "Type": "AWS::EC2::SecurityGroup",
+   "Properties": {
+    "GroupDescription": "Security group allowing connectivity witin the VPC",
+    "SecurityGroupEgress": [
+     {
+      "CidrIp": "0.0.0.0/0",
+      "Description": "Allow all outbound traffic by default",
+      "IpProtocol": "-1"
+     }
+    ],
+    "SecurityGroupIngress": [
+     {
+      "Description": {
+       "Fn::Join": [
+        "",
+        [
+         "from ",
+         {
+          "Fn::GetAtt": [
+           "ec2SecGroupEEF80AA3",
+           "GroupId"
+          ]
+         },
+         ":5432"
+        ]
+       ]
+      },
+      "FromPort": 5432,
+      "IpProtocol": "tcp",
+      "SourceSecurityGroupId": {
+       "Fn::GetAtt": [
+        "ec2SecGroupEEF80AA3",
+        "GroupId"
+       ]
+      },
+      "ToPort": 5432
+     },
+     {
+      "Description": {
+       "Fn::Join": [
+        "",
+        [
+         "from ",
+         {
+          "Fn::GetAtt": [
+           "ec2SecGroupEEF80AA3",
+           "GroupId"
+          ]
+         },
+         ":3306"
+        ]
+       ]
+      },
+      "FromPort": 3306,
+      "IpProtocol": "tcp",
+      "SourceSecurityGroupId": {
+       "Fn::GetAtt": [
+        "ec2SecGroupEEF80AA3",
+        "GroupId"
+       ]
+      },
+      "ToPort": 3306
+     }
+    ],
+    "VpcId": {
+     "Fn::GetAtt": [
+      "g3vpc",
+      "VpcId"
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "Graviton3BenchmarkResourcesStack/rdsSecGroup/Resource"
+   }
+  },
+  "MyCfnDBParameterGroup": {
+   "Type": "AWS::RDS::DBParameterGroup",
+   "Properties": {
+    "Description": "parameter for MariaDB and MySQL",
+    "Family": {
+     "Fn::FindInMap": [
+      "familymap",
+      {
+       "Ref": "DBEngine"
+      },
+      "family"
+     ]
+    },
+    "Parameters": {
+     "Fn::If": [
+      "condition",
+      {
+       "application_name": "rds-test"
+      },
+      {
+       "max_prepared_stmt_count": "1048576"
+      }
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "Graviton3BenchmarkResourcesStack/MyCfnDBParameterGroup"
+   }
+  },
+  "DBInstance": {
+   "Type": "AWS::RDS::DBInstance",
+   "Properties": {
+    "AllocatedStorage": "200",
+    "AvailabilityZone": {
+     "Fn::Select": [
+      1,
+      {
+       "Fn::GetAZs": ""
+      }
+     ]
+    },
+    "DBInstanceClass": {
+     "Fn::Join": [
+      "",
+      [
+       "db.",
+       {
+        "Ref": "rdsInstanceType"
+       },
+       ".xlarge"
+      ]
+     ]
+    },
+    "DBName": "sbtest",
+    "DBParameterGroupName": {
+     "Fn::GetAtt": [
+      "MyCfnDBParameterGroup",
+      "DBParameterGroupName"
+     ]
+    },
+    "DBSubnetGroupName": {
+     "Ref": "SubnetGroup"
+    },
+    "EnablePerformanceInsights": true,
+    "Engine": {
+     "Ref": "DBEngine"
+    },
+    "EngineVersion": {
+     "Fn::FindInMap": [
+      "versionMap",
+      {
+       "Ref": "DBEngine"
+      },
+      "version"
+     ]
+    },
+    "Iops": 10000,
+    "MasterUsername": {
+     "Fn::FindInMap": [
+      "userMap",
+      {
+       "Ref": "DBEngine"
+      },
+      "username"
+     ]
+    },
+    "MasterUserPassword": {
+     "Ref": "RDSPassword"
+    },
+    "PubliclyAccessible": false,
+    "StorageType": "io1",
+    "VPCSecurityGroups": [
+     {
+      "Fn::GetAtt": [
+       "rdsSecGroupB356CE28",
+       "GroupId"
+      ]
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "Graviton3BenchmarkResourcesStack/DBInstance"
+   }
+  }
+ },
+ "Conditions": {
+  "condition": {
+   "Fn::Equals": [
+    {
+     "Ref": "DBEngine"
+    },
+    "postgres"
+   ]
+  }
+ },
+ "Outputs": {
+  "RDSinstanceendpoint": {
+   "Value": {
+    "Fn::GetAtt": [
+     "DBInstance",
+     "Endpoint.Address"
+    ]
+   }
+  },
+  "RDSinstanceport": {
+   "Value": {
+    "Fn::GetAtt": [
+     "DBInstance",
+     "Endpoint.Port"
+    ]
+   }
+  },
+  "RDSusername": {
+   "Value": {
+    "Fn::FindInMap": [
+     "userMap",
+     {
+      "Ref": "DBEngine"
+     },
+     "username"
+    ]
+   }
+  },
+  "RDSpassword": {
+   "Value": {
+    "Ref": "RDSPassword"
+   }
+  },
+  "SSMURL": {
+   "Value": {
+    "Fn::Join": [
+     "",
+     [
+      "https://",
+      {
+       "Ref": "AWS::Region"
+      },
+      ".console.aws.amazon.com/systems-manager/session-manager/",
+      {
+       "Ref": "testBenchInstance0D9EDE5B"
+      },
+      "?region=",
+      {
+       "Ref": "AWS::Region"
+      }
+     ]
+    ]
+   }
+  }
+ }
+}
