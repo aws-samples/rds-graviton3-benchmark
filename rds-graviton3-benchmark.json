@@ -5,10 +5,9 @@
    "Default": "m7g",
    "AllowedValues": [
     "m7g",
-    "m6i",
     "m6g"
    ],
-   "Description": "Select the RDS instance type you want to test. Can be m6g, m6i or m7g. The size will be xlarge"
+   "Description": "Select the RDS instance type you want to test. Can be m6g or m7g. The size will be xlarge"
   },
   "DBEngine": {
    "Type": "String",
