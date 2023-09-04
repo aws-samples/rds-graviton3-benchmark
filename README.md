@@ -41,7 +41,7 @@ The script will output the following parameters:
 4. Select "Template is ready" and "Upload a template file". Choose the file that you previusly downloaded and click "Next"
 5. Enter a name for the stack, for example "rds-graviton3-benchmark"
 6. Fill in the parameters and then click "Next. All parameters are required
-    * *rdsInstanceType* is the RDS instance type you want to test. It can be m6g, m6i, or m7g. The size will be xlarge.
+    * *rdsInstanceType* is the RDS instance type you want to test. It can be m6g or m7g. The size will be xlarge.
     * *DBEngine* is the RDS engine you want to test. It can be MySQL, MariaDB, or PostgreSQL with the following versions: MySQL 8.0.32, PostgreSQL 15.2, and MariaDB 10.6.10.
     * *RDSPassword* is the password you want to set for the RDS admin user.
     * *SsmParameterValue...* do not change this parameter value. It automatically resolves to the latest Amazon Linux AMI.
