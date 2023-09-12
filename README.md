@@ -30,7 +30,6 @@ The script will output the following parameters:
 * The created instance endpoint URL (e.g., database-test.123456789.eu-west1.rds.amazonaws.com)
 * The created instance port (e.g. 5432 for PostgreSQL)
 * The RDS admin username (e.g. "postgres" for PostgreSQL)
-* The RDS admin password
 * The Session Manager URL that you can use to connect to the EC2 created by the template
 
 ## Installation instructions
@@ -43,7 +42,6 @@ The script will output the following parameters:
 6. Fill in the parameters and then click "Next. All parameters are required
     * *rdsInstanceType* is the RDS instance type you want to test. It can be m6g or m7g. The size will be xlarge.
     * *DBEngine* is the RDS engine you want to test. It can be MySQL, MariaDB, or PostgreSQL with the following versions: MySQL 8.0.32, PostgreSQL 15.2, and MariaDB 10.6.10.
-    * *RDSPassword* is the password you want to set for the RDS admin user.
     * *SsmParameterValue...* do not change this parameter value. It automatically resolves to the latest Amazon Linux AMI.
 8. Review your configuration and then tick the checkbox "I acknowledge that AWS CloudFormation might create IAM resources" before clicking Submit
 8. Wait for the stack deployment to complete. It generally takes around 15 minutes.

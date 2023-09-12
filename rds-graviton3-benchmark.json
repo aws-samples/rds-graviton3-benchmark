@@ -19,12 +19,6 @@
    ],
    "Description": "Select the RDS engine you want to test. Can be MySQL, MariaDB or PostgreSQL with the following versions: MySQL 8.0.32, PostgreSQL 15.2 and MariaDB 10.6.10"
   },
-  "RDSPassword": {
-   "Type": "String",
-   "Default": "Password1234",
-   "AllowedPattern": "^[a-zA-Z0-9]*$",
-   "Description": "Enter an admin password for your RDS instance. The password can contain numbers and letters (uppercase and lowercase) "
-  },
   "SsmParameterValueawsserviceamiamazonlinuxlatestal2023amikernel61arm64C96584B6F00A464EAD1953AFF4B05118Parameter": {
    "Type": "AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>",
    "Default": "/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-6.1-arm64"
@@ -887,6 +881,7 @@
      ]
     },
     "Iops": 10000,
+    "ManageMasterUserPassword": true,
     "MasterUsername": {
      "Fn::FindInMap": [
       "userMap",
@@ -895,9 +890,6 @@
       },
       "username"
      ]
-    },
-    "MasterUserPassword": {
-     "Ref": "RDSPassword"
     },
     "PubliclyAccessible": false,
     "StorageType": "io1",
@@ -955,7 +947,16 @@
   },
   "RDSpassword": {
    "Value": {
-    "Ref": "RDSPassword"
+    "Fn::Join": [
+     "",
+     [
+      "Please retrieve the password in Secrets Manager: https://",
+      {
+       "Ref": "AWS::Region"
+      },
+      ".console.aws.amazon.com/secretsmanager/listsecrets"
+     ]
+    ]
    }
   },
   "SSMURL": {
