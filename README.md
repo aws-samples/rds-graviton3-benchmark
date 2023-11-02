@@ -1,7 +1,7 @@
 
 # Test configuration for AWS Graviton3 benchmark on RDS
 
-This AWS CloudFormation script allows you to replicate the test configuration used to produce the results illustrated in the ***URL***. The template will provide all the resources required to run the test.
+This AWS CloudFormation script allows you to replicate the test configuration used to produce the results illustrated in the [blog post](https://aws.amazon.com/blogs/database/powering-amazon-rds-with-aws-graviton3-benchmarks/). The template will provide all the resources required to run the test.
 
 > Note that the CloudFormation template is meant to create a test environment for benchmarking purposes only. It shouldn't be used as a baseline for a production workload
 
